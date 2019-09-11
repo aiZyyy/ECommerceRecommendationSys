@@ -9,8 +9,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>dataloader</artifactId>
-    <description>数据录入</description>
+    <artifactId>statistics-recommender</artifactId>
+    <description>离线统计服务</description>
 
     <dependencies>
         <!-- Spark的依赖引入 -->
@@ -39,5 +39,4 @@
             <version>${mongodb-spark.version}</version>
         </dependency>
     </dependencies>
-
 </project>

@@ -1,4 +1,4 @@
-package com.itzy.recommender
+package com.itzy.dataloder
 
 import com.mongodb.casbah.commons.MongoDBObject
 import com.mongodb.casbah.{MongoClient, MongoClientURI}
