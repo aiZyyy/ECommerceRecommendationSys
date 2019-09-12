@@ -3,6 +3,7 @@ package com.itzy.statistics
 import java.text.SimpleDateFormat
 import java.util.Date
 
+import com.mongodb.casbah.{MongoClient, MongoClientURI}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
@@ -68,23 +69,23 @@ object StatisticsRecommender {
     ratingDF.createOrReplaceTempView("ratings")
 
     // 1. 历史热门商品，按照评分个数统计，productId，count
-    val rateMoreProductsDF = spark.sql("select productId,count(productId) as count from ratings group by productId order by count desc")
+    val rateMoreProductsDF = spark.sql("select productId, count(productId) as count from ratings group by productId order by count desc")
     storeDFInMongoDB(rateMoreProductsDF, RATE_MORE_PRODUCTS)
 
     // 2. 近期热门商品，把时间戳转换成yyyyMM格式进行评分个数统计，最终得到productId, count, yearmonth
     // 创建一个日期格式化工具
     val dateFormat = new SimpleDateFormat("yyyyMM")
     // 注册UDF，将timestamp转化为年月格式yyyyMM
-    spark.udf.register("DateFormat", (a: Int) => dateFormat.format(new Date(a * 1000L)).toInt)
+    spark.udf.register("changeDate", (a: Int) => dateFormat.format(new Date(a * 1000L)).toInt)
     // 把原始rating数据转换成想要的结构productId, score, yearmonth
-    val rantingOfYearMonth = spark.sql("select productId,score,DateFormat(timestamp) as yearmonth from ratings ")
-    rantingOfYearMonth.createOrReplaceTempView("rantingOfYearMonth")
-    val rateMoreRecentlyProductsDF = spark.sql("select productId,count(productId) as count from rantingOfYearMonth group by yearmonth,productId order by yearmonth desc ,count desc")
+    val rantingOfYearMonth = spark.sql("select productId, score, changeDate(timestamp) as yearmonth from ratings")
+    rantingOfYearMonth.createOrReplaceTempView("ratingOfMonth")
+    val rateMoreRecentlyProductsDF = spark.sql("select productId, count(productId) as count, yearmonth from ratingOfMonth group by yearmonth, productId order by yearmonth desc, count desc")
     // 把df保存到mongodb
     storeDFInMongoDB(rateMoreRecentlyProductsDF, RATE_MORE_RECENTLY_PRODUCTS)
 
     // 3. 优质商品统计，商品的平均评分，productId，avg
-    val averageProducts = spark.sql("select productId ,avg(score) as avgScore from ratings group by productId order by avgScore desc")
+    val averageProducts = spark.sql("select productId, avg(score) as avg from ratings group by productId order by avg desc")
     storeDFInMongoDB(averageProducts, AVERAGE_PRODUCTS)
     spark.stop()
   }
