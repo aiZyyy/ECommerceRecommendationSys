@@ -3,7 +3,6 @@ package com.itzy.statistics
 import java.text.SimpleDateFormat
 import java.util.Date
 
-import com.mongodb.casbah.{MongoClient, MongoClientURI}
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, SparkSession}
 
